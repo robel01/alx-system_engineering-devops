@@ -1,19 +1,34 @@
 #!/usr/bin/env bash
-# Usage: ./1-world_wide_web <domain> <subdomain>
-# Display information about subdomains.
-
-domain_information () {
-    line=$(dig "$2"."$1" | grep -A1 'ANSWER SECTION:' | tr '\t' '\n' | tail -2 | tr '\n' ' ')
-    echo "$2 $line" | awk '{print "The subdomain " $1 " is a " $2 " record and points to " $3}'
+# check dig output
+function display_dns() {
+    if [[ $# -eq 2 ]]; then
+        dom="$2.$1"
+        dns_out=$(dig "$dom" A | awk '/ANSWER SECTION/{getline;print;}')
+        record=$(echo "$dns_out" | awk '{print $4}')
+        ip=$(echo "$dns_out" | awk '{print $5}')
+        echo "The subdomain $2 is a $record record and points to $ip"
+    else
+        wd="www.$1"
+        lb="lb-01.$1"
+        wb1="web-01.$1"
+        wb2="web-02.$1"
+        www=$(dig "$wd" A | awk '/ANSWER SECTION/{getline;print;}')
+        lb1=$(dig "$lb" A | awk '/ANSWER SECTION/{getline;print;}')
+        web1=$(dig "$wb1" A | awk '/ANSWER SECTION/{getline;print;}')
+        web2=$(dig "$wb2" A | awk '/ANSWER SECTION/{getline;print;}')
+        www_record=$(echo "$www" | awk '{print $4}')
+        www_ip=$(echo "$www" | awk '{print $5}')
+        lb1_record=$(echo "$lb1" | awk '{print $4}')
+        lb1_ip=$(echo "$lb1" | awk '{print $5}')
+        web1_record=$(echo "$web1" | awk '{print $4}')
+        web1_ip=$(echo "$web1" | awk '{print $5}')
+        web2_record=$(echo "$web2" | awk '{print $4}')
+        web2_ip=$(echo "$web2" | awk '{print $5}')
+        echo "The subdomain www is a $www_record record and points to $www_ip"
+        echo "The subdomain lb-01 is a $lb1_record record and points to $lb1_ip"
+        echo "The subdomain web-01 is a $web1_record record and points to $web1_ip"
+        echo "The subdomain web-02 is a $web2_record record and points to $web2_ip"
+    fi
 }
 
-if [ "$#" == 1 ]
-then
-  domain_information "$1" "www"
-  domain_information "$1" "lb-01"
-  domain_information "$1" "web-01"
-  domain_information "$1" "web-02"
-elif [ "$#" == 2 ]
-then
-  domain_information "$1" "$2"
-fi
+display_dns $1 $2
